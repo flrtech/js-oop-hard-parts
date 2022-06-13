@@ -154,3 +154,102 @@ So lets's focus on the main things tha happen when this code runs:
 * Now *user1* is initialized with the object that was returned from calling *UserCreator*  
 * When we call *user1.increment()* the JS interpeter will look inside *user1* for the *.increment* method, will not find it, then it will look on *user1*'s **_ _proto\_ _** property which links to the **prototype** object on *userCreator*, and on that object, the *.increment* method will be found and called.
 </details>
+
+<details open>
+<summary>Scope & this</summary>
+<br>
+
+# Scope and *this* keyword:
+
+## IMPORTANT
+### The *this* in functions that are called with the *new* keyword is DIFFERENT from the *this* inside normal functions.
+### In functions called with *new*, the *this* will get assigned to the *object part* of the function (the object that also has on it the *prototype* object). BUT MOST IMPORTANTLY, IN THIS CASE, THE *THIS* IS CREATED AS A RESULT OF USING THE *NEW* KEYWORD, AND IT AUTOMATICALLY GETS ASSIGNED AN *EMPTY OBJECT* AND WILL AUTOMATICALLY BE RETURNED AFTER THE FUNCTION RUNS.
+### In normal functions, the *this* will point to *where* the function is called. If it's called with a *dot* (eg: a.callFunctionOnA), it will get assigned to whatever is on the left of the *dot*. If it's called in the *global context* it will point to the *global Window object*. IN THIS CASE, THE *THIS* IS CALLED AN *IMPLICIT PARAMETER*.
+### There are some things that need to be discussed about *this* in arrow functions. We will tackle that subject in the following lines.
+<br>
+
+## Interesting considerations about *this*:
+### What if we change one of our shared functions (theoretically keeping the same functionality) in this manner:  
+<br>
+
+Instead of:
+```javascript
+UserCreator.prototype.increment = function(){
+  this.score++;
+};
+```
+
+We will have:
+```javascript
+UserCreator.prototype.increment = function(){
+  function add1(){
+    this.score++;
+  }
+
+  // let's pay special attention to this line
+  add1();
+};
+```
+
+### This way of implementing our *increment* functionality, even though looks equivalent to the first implementation, will actually not work. Why?
+### Let's run through the code and see what actually happens:
+1. *increment()* is called on *user1*
+2. A new **Execution Context** is created.
+3. In the **Execution Context**, in it's **Local Memory**, the implicit parameter **this** is saved and gets assigned *user1* (*this: user1*). Also, a parameter called *add1* will be saved and that gets assigned a function (*the function add1 itself*).
+4. *add1* function is called
+5. Inside the **Execution Context** of *user1.increment()* a new **Execution Context** will be created for *add1*
+6. In the **Execution Context** of *add1*, in its **Local Memory**, the implicit parameter **this** will be saved, and **SINCE THE FUNCTION WAS NOT CALLED WITH THE DOT NOTATION**, it will get assigned the **Window** global object (*this: Window*). **So, *this.score++* will basically evaluate to *Window.score++* and since the Window object doesn't have a score property, trying to increment it will result in *NaN*** 
+
+
+## The solution to fix the situation above - arrow functions which bind *this* lexically
+
+### What does lexical binding mean?
+The **this** object inside an **arrow function** is **lexically bound**, which is just a fancy way of saying **its value is static and determined by the scope *this* is defined in**. Contrast that with regular functions, where **this** is **dynamic** and **based on the context it's called regardless of the scope** at the time this was defined.
+
+```javascript
+function UserCreator(name, score){
+  this.name = name;
+  this.score = score;
+}
+UserCreator.prototype.increment = function(){
+  const add1 = ()=>{this.score++}
+  add1()
+};
+UserCreator.prototype.login = function(){
+  console.log("login");
+};
+const user1 = new UserCreator(“Eva”, 9)
+user1.increment()
+```
+
+So now, when the *increment* function is called, and consequently, the *add* function is called, since it was declared as an **arrow function** and the **this** is now **lexically scoped** instead of **context dependent**. And so, when we run *increment* on *user1*, *add1* function will be declared, defined and run in the **scope** of *user1*, and so it's **this** being lexically scoped, **will point to *user1***, so it will successfully increment the *score*.
+<br>
+
+## The *class* "syntactic sugar"
+What the **class** keyword does, is make adding methods to our "classes" (function + object combos) easier. Instead of adding them through < functionName >.prototype = < method >, we can add our methods directly inside the *class*.  Also, with the **class** keyword, the function part of the function + object combo, now becomes the **constructor**. 
+### Code
+```javascript
+class UserCreator (name, score) {
+  // this replaces the function part of our function + object combo
+  // this was basically our UserCreator function
+  constructor (name, score) {
+    this.name = name;
+    this.score = score;
+  }
+  increment () { this.score++; }
+  login () { console.log("login"); }
+};
+
+// No longer needed, the methods are directly inside the class now;
+// userCreator.prototype.increment = function() {
+//   this.score++;
+// };
+// userCreator.prototype.login = function() {
+//   console.log("login");
+// }
+
+const user1 = new UserCreator("Will", 3);
+```
+
+### It's called *syntactic sugar* because even though we have *class syntax*, under the hood, JavaScript does exactly the same steps from "Solution 3.", it just abstracts the work away from the programmer and provides a more syntactially elegant way of doing things.
+</details>
