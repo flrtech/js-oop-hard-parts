@@ -155,7 +155,7 @@ So lets's focus on the main things tha happen when this code runs:
 * When we call *user1.increment()* the JS interpeter will look inside *user1* for the *.increment* method, will not find it, then it will look on *user1*'s **_ _proto\_ _** property which links to the **prototype** object on *userCreator*, and on that object, the *.increment* method will be found and called.
 </details>
 
-<details open>
+<details>
 <summary>Scope & this</summary>
 <br>
 
@@ -252,4 +252,84 @@ const user1 = new UserCreator("Will", 3);
 ```
 
 ### It's called *syntactic sugar* because even though we have *class syntax*, under the hood, JavaScript does exactly the same steps from "Solution 3.", it just abstracts the work away from the programmer and provides a more syntactially elegant way of doing things.
+</details>
+
+<details>
+<summary>Subclassing with Factory Functions</summary>
+<br>
+
+# Subclassing with Factory Functions
+## Subclassing for Solution 2 - factory function approach
+
+
+```javascript
+function userCreator(name, score) {
+  const newUser = Object.create(userFunctions);
+  newUser.name = name;
+  newUser.score = score;
+  return newUser;
+}
+
+userFunctions = {
+  sayName: function() {
+    console.log(`I'm ${this.name}`);
+  },
+  increment: function() {
+    this.score++;
+  }
+}
+
+const user1 = userCreator("Phil", 5);
+user1.sayName(); // "I am Phil"
+
+// #########################
+// Code above is from Solution 2
+// Will will focus on the new code below
+
+function paidUserCreator(paidName, paidScore, accountBalance) {
+  const newPaidUser = userCreator(paidName, paidScore);
+  Object.setPrototypeOf(newPaidUser, paidUserFunctions);
+  newPaidUser.accountBalance = accountBalance;
+  return newPaidUser;
+}
+
+const paidUserFunctions = {
+  increaseBalance: function() {
+    this.accountBalance++;
+  }
+};
+
+Object.setPrototypeOf(paidUserFunctions, userFunctions)
+
+const paidUser1 = paidUserCreator("Alyssa", 8, 25);
+
+paidUser1.increaseBalance();
+paidUser1.sayName(); // "I'm alyssa"
+```
+
+### So what do we want?
+We want for our *paid users* to have access to all the *user functions*, but we don't want our normal users to have access to *paidUser functions*. In other wants, we want our *paidUser* to subclass *user*.
+### Does the code above achieve what we set out to do?
+Yes it does.
+### How?
+We will start at this line: 
+```javascript
+const newPaidUser = userCreator(paidName, paidScore);
+```
+What is returned and saved into *newPaidUser* after *userCreator* runs, will be an object that will have a *name* and a *score* property, but also, its **_ _proto\_ _** property will link to *userFunctions*.  
+But we want our *paidUser*'s **_ _proto\_ _** to link to our *paidUserFunctions*. Also, we want our *paidUser* to have an extra property form the *normal user*, and that property is *account balance*, so we will also add it to the object returned by running *userCreator*. 
+```javascript
+// the __proto__ of newPaidUser will link to paidUserFunctions now
+ Object.setPrototypeOf(newPaidUser, paidUserFunctions);
+
+ // we add the accountBalance property
+ // which is specific to paidUsers
+  newPaidUser.accountBalance = accountBalance;
+```
+But as we said, we want our *paidUser* to also have access to methods from regular users (*userFunctions*). To do so, we will set the **_ _proto\_ _** of the *paidUserFunctions* object to link to *userFunctions*.
+```javascript
+Object.setPrototypeOf(paidUserFunctions, userFunctions)
+```
+
+And without even knowing it we have achieve all our goals about *paidUser* subclassing *userCreator*.
 </details>
