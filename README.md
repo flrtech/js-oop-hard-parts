@@ -341,6 +341,7 @@ And without even knowing it we have achieve all our goals about *paidUser* subcl
 # Subclassing with *new* and *call*:
 ## Subclassing in Solution 3
 
+### Note: Please watch the course for any of this to make sense
 
 ```javascript
 function userCreator(name, score) {
@@ -365,7 +366,7 @@ user1.sayName(); // "I'm Phil"
 
 function paidUserCreator(paidName, paidScore, accountBalance) {
   userCreator.call(this, paidName, paidScore);
-  userCreator.apply(this, [paidName, paidScore])
+  //userCreator.apply(this, [paidName, paidScore])
   this.accountBalance = accountBalance;
 }
 
@@ -383,5 +384,23 @@ paidUser1.sayName(); // "I'm alyssa"
 ```
 
 Code execution diagram:  
-[Solution 3 Subclassing Diagram](./images/solution3-subclassing.jpg)
+![Solution 3 Subclassing Diagram](./images/solution3-subclassing.jpg)
+
+### Short rundown of the code:
+1. We call *paidUserCreator* with **new** in front
+2. A new **Execution Context** will be created
+3. Since we called it with **new**, an empty object will be automatically created and assigned to **this**.
+4. The **_ _proto\_ _** property on this newly created object will link to *paidUserCreator* **prototype** object - this happens again automatically, because of the **new** keyword
+5. Now we run *userCreator.call( ... )* so in the **Execution Context** of *paidUserCreator*, another **Execution Context** will be created.
+6. Since we ran the *userCreator* function with *.call()* ,the implicit parameter **this** (used inside *userCreator* for *this.name* and *this.score* assignments) will get assigned to it a reference to **the auto-created, empty object also called *this* from *paidUserCreator***, and since we did not run *userCreator* with **new**, it will run as a normal function, simply doing the assignments (*name* to *name* and *score* to *score*). So we can translate *this.name = name* to *paidUserCreator.name = paidName* (of course, that's not exactly how it works, but it's a generalization for learning purposes) 
+6. Now we get out of *userCreator.call( ... )* and our **this** object has on it a *name* and *score* property and the respective values, and next we add to it *accountBalance*
+7. In the last step, since we called *paidUserCreator* with **new**, the **this** object will get automatically returned.
+
+### What does this do though?
+```javascript
+paidUserCreator.prototype = Object.create(userCreator.prototype);
+```
+Since we want our *paidUserCreator* to "inherit" from userCreator, this code will do just that. How?
+When *Object.create()* runs it always returns an empty object **AND** assigns to the **_ \_proto\_ \_** property of that empty object, whatever it was passed as an argument when the ".create()" function was called. So in our case, we **override** the empty **prototype** object on *paidUserCreator* with another empty object, **that has its *_ _proto\_ _* property linked to *userCreator* prototype object**
+
 </details>
