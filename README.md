@@ -259,7 +259,7 @@ const user1 = new UserCreator("Will", 3);
 <br>
 
 # Subclassing with Factory Functions
-## Subclassing for Solution 2 - factory function approach
+## Subclassing in Solution 2 - factory function approach
 
 
 ```javascript
@@ -280,7 +280,7 @@ userFunctions = {
 }
 
 const user1 = userCreator("Phil", 5);
-user1.sayName(); // "I am Phil"
+user1.sayName(); // "I'm Phil"
 
 // #########################
 // Code above is from Solution 2
@@ -332,4 +332,56 @@ Object.setPrototypeOf(paidUserFunctions, userFunctions)
 ```
 
 And without even knowing it we have achieve all our goals about *paidUser* subclassing *userCreator*.
+</details>
+
+<details>
+<summary>Subclassing with new and call</summary>
+<br>
+
+# Subclassing with *new* and *call*:
+## Subclassing in Solution 3
+
+
+```javascript
+function userCreator(name, score) {
+  this.name = name;
+  this.score = score;
+}
+
+userCreator.prototype.sayName = function() {
+  console.log(`I'm ${this.name}`);
+}
+userCreator.prototype.increment = function() {
+  this.score++;
+}
+
+
+const user1 = new userCreator("Phil", 5);
+user1.sayName(); // "I'm Phil"
+
+// #########################
+// Code above is from Solution 3
+// Will will focus on the new code below
+
+function paidUserCreator(paidName, paidScore, accountBalance) {
+  userCreator.call(this, paidName, paidScore);
+  userCreator.apply(this, [paidName, paidScore])
+  this.accountBalance = accountBalance;
+}
+
+paidUserCreator.prototype = Object.create(userCreator.prototype);
+
+
+  paidUserCreator.prototype.increaseBalance = function() {
+  this.accountBalance++;
+}
+
+const paidUser1 = new paidUserCreator("Alyssa", 8, 25);
+
+paidUser1.increaseBalance();
+paidUser1.sayName(); // "I'm alyssa"
+```
+
+Code execution diagram:  
+[Solution 3 Subclassing Diagram](./images/solution3-subclassing.jpg)
 </details>
